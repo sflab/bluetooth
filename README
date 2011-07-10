@@ -1,0 +1,16 @@
+
+BluetoothWidget
+
+1. Description
+ This application provides the android widget to manage bluetooth
+ connection. You can check a state of connection and change by using
+ the widget.
+
+2. Enviroment
+ Android-SDK: android-2.1-update
+ Device:      Xperia
+
+3. Author
+ Kato Takanori <nilkin.sflab@gmail.com>
+
+
