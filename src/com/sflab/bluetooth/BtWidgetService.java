@@ -36,6 +36,7 @@ implements HasAppConfigure, ServiceListener {
 
 	private static final String ACTION_UPDATE = "com.sflab.bluetooth.ACTION_UPDATE";
 	private static final String ACTION_DELETE = "com.sflab.bluetooth.ACTION_DELETE";
+
 	static final String ACTION_SELECT = "com.sflab.bluetooth.ACTION_SELECT";
 	static final String ACTION_ENABLE = "com.sflab.bluetooth.ACTION_ENABLE";
 	static final String ACTION_RESUME = "com.sflab.bluetooth.ACTION_RESUME";
@@ -55,56 +56,20 @@ implements HasAppConfigure, ServiceListener {
 		}
 		
 		void connect(BluetoothDevice device) {
-			LOG.ENTER(
-					"name:"+device.getName(),
-					"address:"+device.getAddress());
-			if (device == null) {
-				Toast.makeText(
-						getBaseContext(),
-						"can't connect the device",
-						Toast.LENGTH_SHORT
-				).show();
+			LOG.ENTER(device.getName(), device.getAddress());
+			if (this.connection.connect(device)) {
+				messageConnect.show();
 			} else {
-				if (!this.connection.connect(device)) {
-					Toast.makeText(
-							getBaseContext(),
-							"can't connect "+device.getName(),
-							Toast.LENGTH_SHORT
-					).show();
-				} else {
-					Toast.makeText(
-							getBaseContext(),
-							"connecting "+device.getName(),
-							Toast.LENGTH_SHORT
-					).show();
-				}
+				messageNotEnable.show();
 			}
 		}
 
 		void disconnect(BluetoothDevice device) {
-			LOG.ENTER(
-					"name:"+device.getName(),
-					"address:"+device.getAddress());
-			if (device == null) {
-				Toast.makeText(
-						getBaseContext(),
-						"can't disconnect the devie",
-						Toast.LENGTH_SHORT
-				).show();
+			LOG.ENTER("name:"+device.getName(), "address:"+device.getAddress());
+			if (this.connection.disconnect(device)) {
+				messageDisconnect.show();
 			} else {
-				if (!this.connection.disconnect(device)) {
-					Toast.makeText(
-							getBaseContext(),
-							"can't disconnect "+device.getName(),
-							Toast.LENGTH_SHORT
-					).show();
-				} else {
-					Toast.makeText(
-							getBaseContext(),
-							"disconnecting "+device.getName(),
-							Toast.LENGTH_SHORT
-					).show();
-				}
+				messageNotEnable.show();
 			}
 		}
 
@@ -129,6 +94,11 @@ implements HasAppConfigure, ServiceListener {
 	private BtState btState;
 	private int requestId;
 
+	private Toast messageTurnOn;
+	private Toast messageConnect;
+	private Toast messageDisconnect;
+	private Toast messageNotEnable;
+
 	public BtWidgetService() {
 		profiles = new HashMap<Profile, ProfileEntry>();
 		widgets = new ArrayList<Widget>();
@@ -150,7 +120,8 @@ implements HasAppConfigure, ServiceListener {
 			profiles.put(Profile.A2dp, new ProfileEntry(new A2dpConnection()));
 			profiles.put(Profile.Headset, new ProfileEntry(new HeadsetConnection(this, this)));
 			mBroadcastReceiver.regist(this);
-	
+
+			setupMessages();
 			updateBtState();
 			for(int id : widgetIds) {
 				updateWidget(id);
@@ -280,6 +251,13 @@ implements HasAppConfigure, ServiceListener {
 				}
 			}));
 
+	private void setupMessages() {
+		messageTurnOn = Toast.makeText(this, R.string.message_turningon, Toast.LENGTH_SHORT);
+		messageConnect = Toast.makeText(this, R.string.message_connecting, Toast.LENGTH_SHORT);
+		messageDisconnect = Toast.makeText(this, R.string.message_disconnecting, Toast.LENGTH_SHORT);
+		messageNotEnable = Toast.makeText(this, R.string.message_not_enable, Toast.LENGTH_SHORT);
+	}
+
 	private void selectWidget(int id) {
 		LOG.ENTER("id:"+id);
 		requestId = AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -295,6 +273,7 @@ implements HasAppConfigure, ServiceListener {
 				if (btState == BtState.Off) {
 					LOG.DEBUG("  state:off");
 					requestId = id;
+					messageTurnOn.show();
 					adapter.enable();
 				} else if (btState == BtState.TurnningOn) {
 					LOG.DEBUG("  state:turnning-on");

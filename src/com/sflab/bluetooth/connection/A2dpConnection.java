@@ -46,7 +46,7 @@ public class A2dpConnection implements BtConnection {
 	}
 
 	public boolean connect(BluetoothDevice device) {
-		if (mService == null) {
+		if (mService == null || device == null) {
 			return false;
 		}
 		try {
@@ -59,7 +59,7 @@ public class A2dpConnection implements BtConnection {
 	}
 
 	public boolean disconnect(BluetoothDevice device) {
-		if (mService == null) {
+		if (mService == null || device == null) {
 			return false;
 		}
 		try {

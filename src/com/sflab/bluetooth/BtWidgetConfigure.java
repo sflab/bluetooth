@@ -28,16 +28,15 @@ import android.widget.ViewFlipper;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class BtWidgetConfigure extends Activity
-implements HasAppConfigure, OnClickListener, OnItemClickListener {
+implements HasAppConfigure, OnItemClickListener {
 
 	private static final AppLogger LOG = Constants.LOGGER.get(BtWidgetConfigure.class);
 
 	private int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
 	private ViewFlipper flipperView;
-	private View profileSelectView;
-	private View deviceSelectView;
-	private View nameEditView;
+	private ListView profileList;
+	private ListView deviceList;
 
 	private Profile profile;
 	private Item item;
@@ -51,36 +50,35 @@ implements HasAppConfigure, OnClickListener, OnItemClickListener {
 		LOG.ENTER();
 		super.onCreate(savedInstanceState);
 
-        // get any data we were launched with
-        Intent launchIntent = getIntent();
-        Bundle extras = launchIntent.getExtras();
-        if (extras != null) {
-            appWidgetId = extras.getInt(
-            		AppWidgetManager.EXTRA_APPWIDGET_ID,
-            		AppWidgetManager.INVALID_APPWIDGET_ID);
-            Intent cancelResultValue = new Intent();
-            cancelResultValue.putExtra(
-            		AppWidgetManager.EXTRA_APPWIDGET_ID,
-            		appWidgetId);
-            setResult(RESULT_CANCELED, cancelResultValue);
-        } else {
-            // only launch if it's for configuration
-            // Note: when you launch for debugging, this does prevent this
-            // activity from running. We could also turn off the intent
-            // filtering for main activity.
-            // But, to debug this activity, we can also just comment the
-            // following line out.
-            finish();
-        }
+		// get any data we were launched with
+		Intent launchIntent = getIntent();
+		Bundle extras = launchIntent.getExtras();
+		if (extras != null) {
+			appWidgetId = extras.getInt(
+					AppWidgetManager.EXTRA_APPWIDGET_ID,
+					AppWidgetManager.INVALID_APPWIDGET_ID);
+			Intent cancelResultValue = new Intent();
+			cancelResultValue.putExtra(
+					AppWidgetManager.EXTRA_APPWIDGET_ID,
+					appWidgetId);
+			setResult(RESULT_CANCELED, cancelResultValue);
+		} else {
+			// only launch if it's for configuration
+			// Note: when you launch for debugging, this does prevent this
+			// activity from running. We could also turn off the intent
+			// filtering for main activity.
+			// But, to debug this activity, we can also just comment the
+			// following line out.
+			finish();
+		}
 
-        setContentView(R.layout.configure);
+		setContentView(R.layout.configure);
 
-        flipperView = (ViewFlipper) findViewById(R.id.flipper);
-    	profileSelectView = (View) findViewById(R.id.profile_select);
-    	deviceSelectView = (View) findViewById(R.id.device_select);
-    	nameEditView = (View) findViewById(R.id.name_edit);
-    	
-    	initProfileList();
+		flipperView = (ViewFlipper) findViewById(R.id.flipper);
+		profileList = (ListView) findViewById(R.id.profile_list);
+		deviceList = (ListView) findViewById(R.id.device_list);
+
+		initProfileList();
 	}
 
 	@Override
@@ -120,45 +118,33 @@ implements HasAppConfigure, OnClickListener, OnItemClickListener {
 	}
 
 	private void initProfileList() {
-        ArrayAdapter<Profile> adapter = new ArrayAdapter<Profile>(
-        		this,
-        		android.R.layout.simple_list_item_1,
-        		Profile.values());
-        ListView list = (ListView) profileSelectView.findViewById(R.id.list);
-        list.setAdapter(adapter);
-        list.setOnItemClickListener(this);
-        TextView title = (TextView) profileSelectView.findViewById(R.id.title);
-        title.setText("Select Bluetooth Profile");
+		ArrayAdapter<Profile> adapter = new ArrayAdapter<Profile>(
+				this,
+				android.R.layout.simple_list_item_1,
+				Profile.values());
+		profileList.setAdapter(adapter);
+		profileList.setOnItemClickListener(this);
+		setTitle(R.string.title_select_profile);
 	}
 
 	private void initDeviceList() {
-        List<Item> items = new ArrayList<Item>();
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter != null) {
-	        for(BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
-	        	if (profile.isSupported(getUuids(device))) {
-	    	        items.add(Item.create(device.getName(), device.getAddress()));
-	        	}
-	        }
-        }
-        ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(
-        		this,
-        		android.R.layout.simple_list_item_1,
-        		items);
-        ListView list = (ListView) deviceSelectView.findViewById(R.id.list);
-        list.setAdapter(adapter);
-        list.setOnItemClickListener(this);
-        TextView title = (TextView) deviceSelectView.findViewById(R.id.title);
-        title.setText("Select Bluetooth Device");
-	}
-
-	private void initWidgetName() {
-		TextView text = (TextView) nameEditView.findViewById(R.id.text);
-		text.setText(item.name);
-		Button button = (Button) nameEditView.findViewById(R.id.button);
-		button.setOnClickListener(this);
-        TextView title = (TextView) nameEditView.findViewById(R.id.title);
-        title.setText("Edit Widget Name");
+		LOG.ENTER();
+		List<Item> items = new ArrayList<Item>();
+		BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (bluetoothAdapter != null) {
+			for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
+				if (profile.isSupported(getUuids(device))) {
+					items.add(Item.create(device.getName(), device.getAddress()));
+				}
+			}
+		}
+		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(
+				this,
+				android.R.layout.simple_list_item_1,
+				items);
+		deviceList.setAdapter(adapter);
+		deviceList.setOnItemClickListener(this);
+		setTitle(R.string.title_select_device);
 	}
 
 	@Override
@@ -173,24 +159,21 @@ implements HasAppConfigure, OnClickListener, OnItemClickListener {
 	@Override
 	public void onItemClick(AdapterView<?> list, View view, int position, long id) {
 		LOG.ENTER();
-        ListView profileList = (ListView) profileSelectView.findViewById(R.id.list);
-        ListView deviceList = (ListView) deviceSelectView.findViewById(R.id.list);
-        if (list == profileList) {
-        	this.profile = (Profile) profileList.getAdapter().getItem(position);
-        	initDeviceList();
-        } else if (list == deviceList) {
-    		this.item = (Item) deviceList.getAdapter().getItem(position);
-    		initWidgetName();
-        }
-        this.flipperView.showNext();
+		if (list == profileList) {
+			this.profile = (Profile) profileList.getAdapter().getItem(position);
+			initDeviceList();
+			this.flipperView.showNext();
+		} else if (list == deviceList) {
+			this.item = (Item) deviceList.getAdapter().getItem(position);
+			save();
+		}
 	}
 
-	@Override
-	public void onClick(View v) {
-		TextView text = (TextView) nameEditView.findViewById(R.id.text);
+	private  void save() {
+		LOG.ENTER();
 		getAppConfigure().registConfigure(new WidgetConfigure(
 				appWidgetId,
-				text.getText().toString(),
+				item.name,
 				item.address,
 				profile));
 		Intent resultValue = new Intent();
@@ -200,7 +183,7 @@ implements HasAppConfigure, OnClickListener, OnItemClickListener {
 		finish();
 	}
 
-	static class Item {
+	private static class Item {
 		Item(String name, String address) {
 			this.name = name;
 			this.address = address;

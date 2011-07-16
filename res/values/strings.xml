@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bluetooth</string>
-    <string name="a2dp_label">A2DP</string>
-    <string name="headset_label">HSP/Headset</string>
+	<string name="app_name">"Bluetooth"</string>
+	<string name="a2dp_label">"A2DP"</string>
+	<string name="headset_label">"HSP/Headset"</string>
+
+	<string name="message_turningon">"Turning on..."</string>
+	<string name="message_connecting">"Connecting..."</string>
+	<string name="message_disconnecting">"Disconnecting..."</string>
+	<string name="message_not_enable">"Not Enable"</string>
+
+	<string name="title_select_profile">"Bluetooth profile"</string>
+	<string name="title_select_device">"Bluetooth device"</string>
 </resources>

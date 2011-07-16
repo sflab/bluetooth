@@ -178,7 +178,7 @@ public class HeadsetConnection implements BtConnection {
      *         object is currently not connected to the Headset service.
      */
     public int getState(BluetoothDevice device) {
-        if (mService != null) {
+        if (mService != null || device == null) {
             try {
                 return mService.getState();
             } catch (RemoteException e) {
@@ -218,7 +218,7 @@ public class HeadsetConnection implements BtConnection {
      *               will be expected.
      */
     public boolean connectHeadset(BluetoothDevice device) {
-        if (mService != null) {
+        if (mService != null || device == null) {
             try {
                 if (mService.connectHeadset(device)) {
                     return true;
@@ -237,7 +237,7 @@ public class HeadsetConnection implements BtConnection {
      * if not currently connected to the headset service.
      */
     public boolean isConnected(BluetoothDevice device) {
-        if (mService != null) {
+        if (mService != null || device == null) {
             try {
                 return mService.isConnected(device);
             } catch (RemoteException e) {
@@ -253,7 +253,7 @@ public class HeadsetConnection implements BtConnection {
      * not currently connected to the Headset service.
      */
     public boolean disconnectHeadset(BluetoothDevice device) {
-        if (mService != null) {
+        if (mService != null || device == null) {
             try {
                 mService.disconnectHeadset();
                 return true;

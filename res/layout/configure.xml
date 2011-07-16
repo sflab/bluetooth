@@ -8,14 +8,15 @@
 		android:id="@+id/flipper"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent">
-		<include
-			android:id="@+id/profile_select"
-			layout="@layout/listview"/>
-		<include
-			android:id="@+id/device_select"
-			layout="@layout/listview"/>
-		<include
-			android:id="@+id/name_edit"
-			layout="@layout/textview"/>
+		<ListView
+			android:id="@+id/profile_list"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:clickable="true"/>
+		<ListView
+			android:id="@+id/device_list"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:clickable="true"/>
 	</ViewFlipper>
 </LinearLayout>

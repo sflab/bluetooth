@@ -16,19 +16,29 @@ import android.util.Log;
 
 public class AppLoggerFactory {
 
+	private static final boolean ENABLE_CONFIG = true;
+	private static final Level DEFAULT_LEVEL = Level.Error;
+	private static final Level TRACE_LEVEL = Level.Information;
+
 	private final Map<String, Level> mEnableList;
 
 	private static enum Level {
-		Debug,
-		Information,
-		Warrning,
-		Error;
+		Debug(0),
+		Information(1),
+		Warrning(2),
+		Error(3);
 
-	   private static final String STR_DEBUG = "debug";
-	   private static final String STR_INFO = "info";
-	   private static final String STR_WARRN = "warrn";
-	   private static final String STR_ERROR = "error";
-	
+		private static final String STR_DEBUG = "debug";
+		private static final String STR_INFO = "info";
+		private static final String STR_WARRN = "warrn";
+		private static final String STR_ERROR = "error";
+
+		private final int index;
+
+		Level(int index) {
+			this.index = index;
+		}
+
 		public static Level fromString(String str) {
 			if (STR_DEBUG.equals(str)) {
 				return Debug;
@@ -41,6 +51,10 @@ public class AppLoggerFactory {
 			} else {
 				throw new IllegalStateException();
 			}
+		}
+
+		public boolean isHight(Level other) {
+			return this.index >= other.index;
 		}
 
 		public String toString() {
@@ -56,18 +70,20 @@ public class AppLoggerFactory {
 
 	public AppLoggerFactory(String path) {
 		mEnableList = new HashMap<String, Level>();
-		try {
-			config(path);
-		} catch(IllegalStateException e) {
+		if (ENABLE_CONFIG) {
+			try {
+				config(path);
+			} catch(IllegalStateException e) {
+			}
 		}
 	}
 
 	public <T> AppLogger get(Class<T> clazz) {
 		Level level = mEnableList.get(clazz);
 		if (level != null) {
-			return new DefaultLogger(clazz.getSimpleName());
+			return new DefaultLogger(level, clazz.getSimpleName());
 		} else {
-			return new DefaultLogger(clazz.getSimpleName());
+			return new DefaultLogger(DEFAULT_LEVEL, clazz.getSimpleName());
 		}
 	}
 
@@ -96,48 +112,62 @@ public class AppLoggerFactory {
 	}
 
 	private static class DefaultLogger implements AppLogger {
-		private String mTag;
+		private final String mTag;
+		private final Level mLevel;
 
-		public DefaultLogger(String tag) {
+		public DefaultLogger(Level level, String tag) {
 			mTag = tag;
+			mLevel = level;
 		}
 
 		public void DEBUG(String format, Object...args) {
-			Log.d(mTag, String.format(format, args));
+			if (Level.Debug.isHight(mLevel)) {
+				Log.d(mTag, String.format(format, args));
+			}
 		}
 
 		public void INFO(String format, Object...args) {
-			Log.i(mTag, String.format(format, args));
+			if (Level.Information.isHight(mLevel)) {
+				Log.i(mTag, String.format(format, args));
+			}
 		}
 
 		public void WARRING(String format, Object...args) {
-			Log.w(mTag, String.format(format, args));
+			if (Level.Warrning.isHight(mLevel)) {
+				Log.w(mTag, String.format(format, args));
+			}
 		}
 
 		public void ERROR(String format, Object...args) {
-			Log.e(mTag, String.format(format, args));
+			if (Level.Error.isHight(mLevel)) {
+				Log.e(mTag, String.format(format, args));
+			}
 		}
 
 		public void ENTER(Object...args) {
-			final StringBuilder builder = new StringBuilder(131);
-			if(args.length > 0) {
-				builder.append(args[0]);
-				for(int i=1; i < args.length; i++) {
-					builder.append(args[i]);
+			if (TRACE_LEVEL.isHight(mLevel)) {
+				final StringBuilder builder = new StringBuilder(131);
+				if(args.length > 0) {
+					builder.append(args[0]);
+					for(int i=1; i < args.length; i++) {
+						builder.append(args[i]);
+					}
 				}
+				DEBUG(String.format("ENTR%s(%s)", currentMethodInfo(4), builder.toString()));
 			}
-			DEBUG(String.format("ENTR%s(%s)", currentMethodInfo(4), builder.toString()));
 		}
 
 		public void LEAVE(Object...args) {
-			final StringBuilder builder = new StringBuilder(131);
-			if(args.length > 0) {
-				builder.append(args[0]);
-				for(int i=1; i < args.length; i++) {
-					builder.append(args[i]);
+			if (TRACE_LEVEL.isHight(mLevel)) {
+				final StringBuilder builder = new StringBuilder(131);
+				if(args.length > 0) {
+					builder.append(args[0]);
+					for(int i=1; i < args.length; i++) {
+						builder.append(args[i]);
+					}
 				}
+				DEBUG(String.format("EXIT%s(%s)", currentMethodInfo(4), builder.toString()));
 			}
-			DEBUG(String.format("EXIT%s(%s)", currentMethodInfo(4), builder.toString()));
 		}
 
 		private String currentMethodInfo(int depth) {
@@ -154,30 +184,5 @@ public class AppLoggerFactory {
 				return "N/A";
 			}
 		}
-	}
-
-	private static class DummyLogger implements AppLogger {
-
-		public DummyLogger() {
-		}
-
-		public void DEBUG(String format, Object...args) {
-		}
-
-		public void INFO(String format, Object...args) {
-		}
-
-		public void WARRING(String format, Object...args) {
-		}
-
-		public void ERROR(String format, Object...args) {
-		}
-
-		public void ENTER(Object...args) {
-		}
-
-		public void LEAVE(Object...args) {
-		}
-
 	}
 }
