@@ -1,6 +1,7 @@
 package com.sflab.bluetooth;
 
 import android.bluetooth.BluetoothUuid;
+import android.os.Environment;
 import android.os.ParcelUuid;
 
 import com.sflab.common.AppLoggerFactory;
@@ -11,7 +12,10 @@ public class Constants {
 	public static final String ACTION_BLUETOOTH_DISCONNECT = "ACTION_BLUETOOTH_DISCONNECT";
 	public static final String EXTRA_BLUETOOTH_ADDRESS = "EXTRA_BLUETOOTH_ADDRESS";
 
-	public static final AppLoggerFactory LOGGER = new AppLoggerFactory("/sdcard/log.config");
+	public static final AppLoggerFactory LOGGER = new AppLoggerFactory(
+			AppLoggerFactory.Level.Error,
+			AppLoggerFactory.Level.Information,
+			Environment.getExternalStorageDirectory().getPath() + "/log.config");
 
 	public static class NoProfileFoundError extends Exception {
 		private static final long serialVersionUID = -1865411696886457810L;

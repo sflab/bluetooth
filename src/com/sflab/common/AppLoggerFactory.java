@@ -1,8 +1,10 @@
 package com.sflab.common;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,14 +17,97 @@ import org.w3c.dom.NodeList;
 import android.util.Log;
 
 public class AppLoggerFactory {
+	private static final String TAG = AppLoggerFactory.class.getSimpleName();
 
-	private static final boolean ENABLE_CONFIG = true;
-	private static final Level DEFAULT_LEVEL = Level.Error;
-	private static final Level TRACE_LEVEL = Level.Information;
+	private final Level mDefaultLevel;
+	private final Level mTraceLevel;
 
-	private final Map<String, Level> mEnableList;
+	private final List<PackageWithLevel> mEntries;
 
-	private static enum Level {
+	public AppLoggerFactory(Level defaultLevel, Level traceLevel, String configFilename) {
+		mDefaultLevel = defaultLevel;
+		mTraceLevel = traceLevel;
+		mEntries = new ArrayList<PackageWithLevel>();
+		File configFile = new File(configFilename);
+		try {
+			config(configFile);
+		} catch(IllegalStateException e) {
+		}
+	}
+
+	public AppLoggerFactory(Level defaultLevel, Level traceLevel) {
+		mDefaultLevel = defaultLevel;
+		mTraceLevel = traceLevel;
+		mEntries = new ArrayList<PackageWithLevel>();
+	}
+
+	public <T> AppLogger get(Class<T> clazz) {
+		PackageName packageName = new PackageName(clazz.getName());
+		Level level = null;
+		for(PackageWithLevel e : mEntries) {
+			if (e.mFilter.accept(packageName)) {
+				level = e.mLevel;
+				break;
+			}
+		}
+		if (level != null) {
+			return new DefaultLogger(level, mTraceLevel, clazz.getSimpleName());
+		} else {
+			return new DefaultLogger(mDefaultLevel, mTraceLevel, clazz.getSimpleName());
+		}
+	}
+
+	private void config(File configFile) {
+		Log.d(TAG, "config("+configFile.getPath()+")");
+		mEntries.clear();
+		DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+		Node root = null;
+		try {
+			DocumentBuilder builder = builderFactory.newDocumentBuilder();
+			Document document = builder.parse(configFile);
+			NodeList list = document.getChildNodes();
+			if (list.getLength() == 1) {
+				root = list.item(0);
+			}
+		} catch(Exception e) {
+		}
+		if (root == null || !root.getNodeName().equals("configure")) {
+			return;
+		}
+
+		NodeList nodes = root.getChildNodes();
+		Log.d(TAG, "  count:" + nodes.getLength());
+		for(int i=0; i<nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+			Log.d(TAG, "  name:" + node.getNodeName());
+			if ("item".equals(node.getNodeName())) {
+				NamedNodeMap attributes = node.getAttributes();
+				Node name = attributes.getNamedItem("name");
+				Node level = attributes.getNamedItem("level");
+				Log.d(TAG, "  > name:" + name.getNodeValue());
+				Log.d(TAG, "  > level:" + level.getNodeValue());
+				if (name != null && level != null) {
+					try {
+						mEntries.add(new PackageWithLevel(
+								new PackageNameFilter(name.getNodeValue()),
+								Level.fromString(level.getNodeValue())));
+					} catch(IllegalArgumentException e) {
+						Log.e(TAG, e.getMessage());
+					}
+				}
+			}
+		}
+
+		Collections.sort(mEntries);
+
+		Log.i(TAG, "Logger configure");
+		for(PackageWithLevel e : mEntries) {
+			Log.i(TAG, "  " + e);
+		}
+	}
+
+
+	public static enum Level {
 		Debug(0),
 		Information(1),
 		Warrning(2),
@@ -49,7 +134,7 @@ public class AppLoggerFactory {
 			} else if (STR_ERROR.equals(str)) {
 				return Error;
 			} else {
-				throw new IllegalStateException();
+				throw new IllegalArgumentException();
 			}
 		}
 
@@ -68,56 +153,85 @@ public class AppLoggerFactory {
 		}
 	}
 
-	public AppLoggerFactory(String path) {
-		mEnableList = new HashMap<String, Level>();
-		if (ENABLE_CONFIG) {
-			try {
-				config(path);
-			} catch(IllegalStateException e) {
+	private static class PackageWithLevel implements Comparable<PackageWithLevel> {
+
+		final PackageNameFilter mFilter;
+		final Level mLevel;
+
+		PackageWithLevel(PackageNameFilter filter, Level level) {
+			mFilter = filter;
+			mLevel = level;
+		}
+
+		@Override
+		public int compareTo(PackageWithLevel another) {
+			return mFilter.length() - another.mFilter.length();
+		}
+
+		@Override
+		public String toString() {
+			StringBuffer buffer = new StringBuffer();
+			for(String p : mFilter.mPackage.mParts) {
+				if (p != mFilter.mPackage.mParts[0]) {
+					buffer.append(".");
+				}
+				buffer.append(p);
+			}
+			buffer.append(": ");
+			buffer.append(mLevel);
+			return buffer.toString();
+		}
+	}
+
+	private static class PackageName {
+		private final String[] mParts;
+		PackageName(String name) {
+			StringTokenizer tokenizer = new StringTokenizer(name, ".");
+			int i = 0;
+			mParts = new String[tokenizer.countTokens()];
+			while(tokenizer.hasMoreTokens() && i < mParts.length) {
+				mParts[i++] = tokenizer.nextToken();
 			}
 		}
-	}
-
-	public <T> AppLogger get(Class<T> clazz) {
-		Level level = mEnableList.get(clazz);
-		if (level != null) {
-			return new DefaultLogger(level, clazz.getSimpleName());
-		} else {
-			return new DefaultLogger(DEFAULT_LEVEL, clazz.getSimpleName());
+		int count() {
+			return mParts.length;
+		}
+		String at(int index) {
+			return mParts[index];
 		}
 	}
 
-	private void config(String configfile) {
-		File file = new File(configfile);
-		mEnableList.clear();
-		DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-		try {
-			DocumentBuilder builder = builderFactory.newDocumentBuilder();
-			Document document = builder.parse(file);
-			NodeList list = document.getChildNodes();
-			for(int i=0; i<list.getLength(); i++) {
-				Node node = list.item(i);
-				if ("item".equals(node.getNodeName())) {
-					NamedNodeMap attributes = node.getAttributes();
-					Node name = attributes.getNamedItem("name");
-					Node level = attributes.getNamedItem("level");
-					if (name != null && level != null) {
-						mEnableList.put(name.toString(), Level.fromString(level.toString()));
+	private static class PackageNameFilter {
+		private final PackageName mPackage;
+		PackageNameFilter(String filter) {
+			mPackage = new PackageName(filter);
+		}
+		public int length() {
+			return mPackage.count();
+		}
+		public boolean accept(PackageName packageName) {
+			if (mPackage.count() > packageName.count()) {
+				return false;
+			} else {
+				for(int i=0; i<mPackage.count(); i++) {
+					if (!mPackage.at(i).equals(packageName.at(i))) {
+						return false;
 					}
 				}
 			}
-		} catch(Exception e) {
-			//throw new RuntimeException(e);
+			return true;
 		}
 	}
 
 	private static class DefaultLogger implements AppLogger {
 		private final String mTag;
 		private final Level mLevel;
+		private final Level mTrace;
 
-		public DefaultLogger(Level level, String tag) {
+		public DefaultLogger(Level level, Level trace, String tag) {
 			mTag = tag;
 			mLevel = level;
+			mTrace = trace;
 		}
 
 		public void DEBUG(String format, Object...args) {
@@ -145,7 +259,7 @@ public class AppLoggerFactory {
 		}
 
 		public void ENTER(Object...args) {
-			if (TRACE_LEVEL.isHight(mLevel)) {
+			if (mTrace.isHight(mLevel)) {
 				final StringBuilder builder = new StringBuilder(131);
 				if(args.length > 0) {
 					builder.append(args[0]);
@@ -158,7 +272,7 @@ public class AppLoggerFactory {
 		}
 
 		public void LEAVE(Object...args) {
-			if (TRACE_LEVEL.isHight(mLevel)) {
+			if (mTrace.isHight(mLevel)) {
 				final StringBuilder builder = new StringBuilder(131);
 				if(args.length > 0) {
 					builder.append(args[0]);
