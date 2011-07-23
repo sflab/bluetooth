@@ -22,7 +22,11 @@ public class AppBroadcastReceiver extends BroadcastReceiver {
 	}
 
 	public void unregist(Context context) {
-		context.unregisterReceiver(this);
+		try {
+			context.unregisterReceiver(this);
+		} catch (Exception e) {
+			//NOOP
+		}
 	}
 
 	@Override
