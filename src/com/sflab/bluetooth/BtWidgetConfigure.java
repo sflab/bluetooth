@@ -18,6 +18,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.view.View;
+import android.view.Window;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -68,6 +70,7 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 			finish();
 		}
 
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.configure);
 
 		flipperView = (ViewFlipper) findViewById(R.id.flipper);
@@ -118,7 +121,6 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 				android.R.layout.simple_list_item_1, Profile.values());
 		profileList.setAdapter(adapter);
 		profileList.setOnItemClickListener(this);
-		setTitle(R.string.title_select_profile);
 	}
 
 	private void initDeviceList() {
@@ -138,7 +140,6 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 				android.R.layout.simple_list_item_1, items);
 		deviceList.setAdapter(adapter);
 		deviceList.setOnItemClickListener(this);
-		setTitle(R.string.title_select_device);
 	}
 
 	@Override
@@ -146,6 +147,7 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		if (this.flipperView.getCurrentView() == this.flipperView.getChildAt(0)) {
 			super.onBackPressed();
 		} else {
+			setupAnimation(true);
 			this.flipperView.showPrevious();
 		}
 	}
@@ -157,10 +159,12 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		if (list == profileList) {
 			this.profile = (Profile) profileList.getAdapter().getItem(position);
 			initDeviceList();
+			setupAnimation(false);
 			this.flipperView.showNext();
 		} else if (list == deviceList) {
 			this.item = (Item) deviceList.getAdapter().getItem(position);
 			save();
+			finish();
 		}
 	}
 
@@ -173,7 +177,11 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		setResult(RESULT_OK, resultValue);
 		BtWidgetService.sendUpdateWidget(this, new int[] { this.appWidgetId });
-		finish();
+	}
+
+	private void setupAnimation(boolean back) {
+		flipperView.setInAnimation(AnimationUtils.makeInAnimation(this, back));
+		flipperView.setOutAnimation(AnimationUtils.makeOutAnimation(this, back));
 	}
 
 	private static class Item {
