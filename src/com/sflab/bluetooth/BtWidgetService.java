@@ -29,10 +29,11 @@ import android.os.IBinder;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-public class BtWidgetService extends Service
-implements HasAppConfigure, ServiceListener {
+public class BtWidgetService extends Service implements HasAppConfigure,
+		ServiceListener {
 
-	private static final AppLogger LOG = Constants.LOGGER.get(BtWidgetService.class);
+	private static final AppLogger LOG = Constants.LOGGER
+			.get(BtWidgetService.class);
 
 	private static final String ACTION_UPDATE = "com.sflab.bluetooth.ACTION_UPDATE";
 	private static final String ACTION_DELETE = "com.sflab.bluetooth.ACTION_DELETE";
@@ -54,7 +55,7 @@ implements HasAppConfigure, ServiceListener {
 			this.connection.release();
 			this.currentDevices.clear();
 		}
-		
+
 		void connect(BluetoothDevice device) {
 			LOG.ENTER(device.getName(), device.getAddress());
 			if (this.connection.connect(device)) {
@@ -65,7 +66,8 @@ implements HasAppConfigure, ServiceListener {
 		}
 
 		void disconnect(BluetoothDevice device) {
-			LOG.ENTER("name:"+device.getName(), "address:"+device.getAddress());
+			LOG.ENTER("name:" + device.getName(), "address:"
+					+ device.getAddress());
 			if (this.connection.disconnect(device)) {
 				messageDisconnect.show();
 			} else {
@@ -75,16 +77,17 @@ implements HasAppConfigure, ServiceListener {
 
 		void disconnect() {
 			LOG.ENTER();
-			for(BluetoothDevice device : this.connection.getConnectedDevices()) {
+			for (BluetoothDevice device : this.connection.getConnectedDevices()) {
 				connection.disconnect(device);
 			}
 		}
 
 		void updateCurrentDevices() {
 			this.currentDevices.clear();
-			for(BluetoothDevice device : this.connection.getConnectedDevices()) {
+			for (BluetoothDevice device : this.connection.getConnectedDevices()) {
 				currentDevices.add(device.getAddress());
-				LOG.DEBUG("  state:%s(%s)", device.getName(), device.getAddress());
+				LOG.DEBUG("  state:%s(%s)", device.getName(), device
+						.getAddress());
 			}
 		}
 	}
@@ -118,12 +121,13 @@ implements HasAppConfigure, ServiceListener {
 		Set<Integer> widgetIds = getAppConfigure().getEntrySet();
 		if (!widgetIds.isEmpty() || intent.getAction().equals(ACTION_ENABLE)) {
 			profiles.put(Profile.A2dp, new ProfileEntry(new A2dpConnection()));
-			profiles.put(Profile.Headset, new ProfileEntry(new HeadsetConnection(this, this)));
+			profiles.put(Profile.Headset, new ProfileEntry(
+					new HeadsetConnection(this, this)));
 			mBroadcastReceiver.regist(this);
 
 			setupMessages();
 			updateBtState();
-			for(int id : widgetIds) {
+			for (int id : widgetIds) {
 				updateWidget(id);
 			}
 		} else {
@@ -136,7 +140,7 @@ implements HasAppConfigure, ServiceListener {
 	public void onDestroy() {
 		LOG.ENTER();
 		mBroadcastReceiver.unregist(this);
-		for(ProfileEntry profile : profiles.values()) {
+		for (ProfileEntry profile : profiles.values()) {
 			profile.release();
 		}
 		profiles.clear();
@@ -171,102 +175,124 @@ implements HasAppConfigure, ServiceListener {
 	public void onServiceDisconnected() {
 	}
 
-	private AppBroadcastReceiver.Action action(
-			String name,
+	private AppBroadcastReceiver.Action action(String name,
 			ActionCommand command) {
-		return new AppBroadcastReceiver.Action(name, command); 
+		return new AppBroadcastReceiver.Action(name, command);
 	}
 
 	private final AppBroadcastReceiver mBroadcastReceiver = new AppBroadcastReceiver(
 			action(ACTION_UPDATE, new ActionCommand() {
-				@Override public void action(Intent intent) {
-					for(int id : intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
+				@Override
+				public void action(Intent intent) {
+					for (int id : intent
+							.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
 						updateWidget(id);
 					}
 				}
-			}),
-			action(ACTION_DELETE,  new ActionCommand() {
-				@Override public void action(Intent intent) {
-					for(int id : intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
+			}), action(ACTION_DELETE, new ActionCommand() {
+				@Override
+				public void action(Intent intent) {
+					for (int id : intent
+							.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
 						deleteWidget(id);
 					}
 				}
-			}),
-			action(ACTION_SELECT,  new ActionCommand() {
-				@Override public void action(Intent intent) {
+			}), action(ACTION_SELECT, new ActionCommand() {
+				@Override
+				public void action(Intent intent) {
 					selectWidget(intent.getIntExtra(
 							AppWidgetManager.EXTRA_APPWIDGET_ID,
 							AppWidgetManager.INVALID_APPWIDGET_ID));
 				}
-			}),
-			action(BluetoothAdapter.ACTION_STATE_CHANGED,  new ActionCommand() {
-				@Override public void action(Intent intent) {
-					updateBtState();
-					if (requestId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-						if (btState == BtState.On) {
-							selectWidget(requestId);
+			}), action(BluetoothAdapter.ACTION_STATE_CHANGED,
+					new ActionCommand() {
+						@Override
+						public void action(Intent intent) {
+							updateBtState();
+							if (requestId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+								if (btState == BtState.On) {
+									selectWidget(requestId);
+								}
+							}
 						}
-					}
-				}
-			}),
-			action(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED,  new ActionCommand() {
-				@Override public void action(Intent intent) {
-					updateBtState();
-				}
-			}),
-			action(BluetoothDevice.ACTION_ACL_CONNECTED,  new ActionCommand() {
-				@Override public void action(Intent intent) {
-					updateBtState();
-				}
-			}),
-			action(BluetoothDevice.ACTION_ACL_DISCONNECTED,  new ActionCommand() {
-				@Override public void action(Intent intent) {
-					updateBtState();
-				}
-			}),
-			action("android.bluetooth.headset.action.STATE_CHANGED", new ActionCommand() {
-				@Override public void action(Intent intent) {
-					updateBtState();
-					Widget widget = getWidget(requestId);
-					if (widget != null && widget.configure.profile == Profile.Headset) {
-						ProfileEntry profile = profiles.get(widget.configure.profile);
-						if (profile.currentDevices.isEmpty() && btState == BtState.On) {
-							selectWidget(requestId);
-							requestId = AppWidgetManager.INVALID_APPWIDGET_ID;
+					}), action(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED,
+					new ActionCommand() {
+						@Override
+						public void action(Intent intent) {
+							updateBtState();
 						}
-					}
-				}
-			}),
-			action("android.bluetooth.a2dp.action.SINK_STATE_CHANGED", new ActionCommand() {
-				@Override public void action(Intent intent) {
-					updateBtState();
-					Widget widget = getWidget(requestId);
-					if (widget != null && widget.configure.profile == Profile.A2dp) {
-						ProfileEntry profile = profiles.get(widget.configure.profile);
-						if (profile.currentDevices.isEmpty() && btState == BtState.On) {
-							selectWidget(requestId);
-							requestId = AppWidgetManager.INVALID_APPWIDGET_ID;
+					}), action(BluetoothDevice.ACTION_ACL_CONNECTED,
+					new ActionCommand() {
+						@Override
+						public void action(Intent intent) {
+							updateBtState();
 						}
-					}
-				}
-			}));
+					}), action(BluetoothDevice.ACTION_ACL_DISCONNECTED,
+					new ActionCommand() {
+						@Override
+						public void action(Intent intent) {
+							updateBtState();
+						}
+					}), action(
+					"android.bluetooth.headset.action.STATE_CHANGED",
+					new ActionCommand() {
+						@Override
+						public void action(Intent intent) {
+							updateBtState();
+							Widget widget = getWidget(requestId);
+							if (widget != null
+									&& widget.configure.profile == Profile.Headset) {
+								ProfileEntry profile = profiles
+										.get(widget.configure.profile);
+								if (profile.currentDevices.isEmpty()
+										&& btState == BtState.On) {
+									selectWidget(requestId);
+									requestId = AppWidgetManager.INVALID_APPWIDGET_ID;
+								}
+							}
+						}
+					}), action(
+					"android.bluetooth.a2dp.action.SINK_STATE_CHANGED",
+					new ActionCommand() {
+						@Override
+						public void action(Intent intent) {
+							updateBtState();
+							Widget widget = getWidget(requestId);
+							if (widget != null
+									&& widget.configure.profile == Profile.A2dp) {
+								ProfileEntry profile = profiles
+										.get(widget.configure.profile);
+								if (profile.currentDevices.isEmpty()
+										&& btState == BtState.On) {
+									selectWidget(requestId);
+									requestId = AppWidgetManager.INVALID_APPWIDGET_ID;
+								}
+							}
+						}
+					}));
 
 	private void setupMessages() {
-		messageTurnOn = Toast.makeText(this, R.string.message_turningon, Toast.LENGTH_SHORT);
-		messageConnect = Toast.makeText(this, R.string.message_connecting, Toast.LENGTH_SHORT);
-		messageDisconnect = Toast.makeText(this, R.string.message_disconnecting, Toast.LENGTH_SHORT);
-		messageNotEnable = Toast.makeText(this, R.string.message_not_enable, Toast.LENGTH_SHORT);
+		messageTurnOn = Toast.makeText(this, R.string.message_turningon,
+				Toast.LENGTH_SHORT);
+		messageConnect = Toast.makeText(this, R.string.message_connecting,
+				Toast.LENGTH_SHORT);
+		messageDisconnect = Toast.makeText(this,
+				R.string.message_disconnecting, Toast.LENGTH_SHORT);
+		messageNotEnable = Toast.makeText(this, R.string.message_not_enable,
+				Toast.LENGTH_SHORT);
 	}
 
 	private void selectWidget(int id) {
-		LOG.ENTER("id:"+id);
+		LOG.ENTER("id:" + id);
 		requestId = AppWidgetManager.INVALID_APPWIDGET_ID;
 		BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		Widget widget = getWidget(id);
 		ProfileEntry profile = profiles.get(widget.configure.profile);
 		if (widget != null) {
-			BluetoothDevice device = adapter.getRemoteDevice(widget.configure.address);
-			boolean connected = profile.currentDevices.contains(device.getAddress());		
+			BluetoothDevice device = adapter
+					.getRemoteDevice(widget.configure.address);
+			boolean connected = profile.currentDevices.contains(device
+					.getAddress());
 			if (connected) {
 				profile.disconnect(device);
 			} else {
@@ -296,7 +322,7 @@ implements HasAppConfigure, ServiceListener {
 	}
 
 	private void updateWidget(int widgetId) {
-		LOG.ENTER("id:"+widgetId);
+		LOG.ENTER("id:" + widgetId);
 		Widget widget = getWidget(widgetId);
 		if (widget != null) {
 			widget.update();
@@ -306,14 +332,17 @@ implements HasAppConfigure, ServiceListener {
 				widgets.add(widget);
 				widget.update();
 			} catch (NoPreferenceFoundError e) {
-				LOG.ERROR("The specified widget dosen't have a configuration. id:%d", widgetId);
+				LOG
+						.ERROR(
+								"The specified widget dosen't have a configuration. id:%d",
+								widgetId);
 				LOG.ERROR("  exception:%s", e.getMessage());
 			}
 		}
 	}
 
 	private void deleteWidget(int widgetId) {
-		LOG.ENTER("id:"+widgetId);
+		LOG.ENTER("id:" + widgetId);
 		Widget widget = getWidget(widgetId);
 		if (widget != null) {
 			widget.remove();
@@ -331,29 +360,29 @@ implements HasAppConfigure, ServiceListener {
 		}
 		LOG.DEBUG("  state:%s", btState.code);
 		// update each profile connections
-		for(ProfileEntry profile : profiles.values()) {
+		for (ProfileEntry profile : profiles.values()) {
 			profile.updateCurrentDevices();
 		}
 		// update widget view
-		for(Widget i : widgets) {
+		for (Widget i : widgets) {
 			i.update();
 		}
 		LOG.LEAVE();
 	}
 
 	private enum BtState {
-		Off(BluetoothAdapter.STATE_OFF),
-		On(BluetoothAdapter.STATE_ON),
-		TurnningOn(BluetoothAdapter.STATE_TURNING_OFF),
-		TurnningOff(BluetoothAdapter.STATE_TURNING_ON);
+		Off(BluetoothAdapter.STATE_OFF), On(BluetoothAdapter.STATE_ON), TurnningOn(
+				BluetoothAdapter.STATE_TURNING_OFF), TurnningOff(
+				BluetoothAdapter.STATE_TURNING_ON);
 
 		private BtState(int code) {
 			this.code = code;
 		}
 
 		static BtState fromeCode(int code) {
-			for(BtState i : BtState.values()) {
-				if (i.code == code) return i;
+			for (BtState i : BtState.values()) {
+				if (i.code == code)
+					return i;
 			}
 			return BtState.Off;
 		}
@@ -362,8 +391,9 @@ implements HasAppConfigure, ServiceListener {
 	}
 
 	private Widget getWidget(int id) {
-		for(Widget i : widgets) {
-			if (i.id == id) return i;
+		for (Widget i : widgets) {
+			if (i.id == id)
+				return i;
 		}
 		return null;
 	}
@@ -379,11 +409,8 @@ implements HasAppConfigure, ServiceListener {
 			this.configure = getAppConfigure().getConfigure(id);
 			Intent selectIntent = new Intent(ACTION_SELECT);
 			selectIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, this.id);
-			pendingIntent = PendingIntent.getBroadcast(
-					BtWidgetService.this,
-					this.id,
-					selectIntent,
-					PendingIntent.FLAG_UPDATE_CURRENT);
+			pendingIntent = PendingIntent.getBroadcast(BtWidgetService.this,
+					this.id, selectIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 			LOG.DEBUG("  id:%d", this.id);
 			LOG.DEBUG("  name:%s", this.configure.name);
 			LOG.DEBUG("  address:%s", this.configure.address);
@@ -397,16 +424,20 @@ implements HasAppConfigure, ServiceListener {
 			LOG.DEBUG("  address:%s", this.configure.address);
 			LOG.DEBUG("  profile:%s", this.configure.profile.code);
 			ProfileEntry profile = profiles.get(configure.profile);
-			RemoteViews views = new RemoteViews(getPackageName(), R.layout.widget);
+			RemoteViews views = new RemoteViews(getPackageName(),
+					R.layout.widget);
 			views.setOnClickPendingIntent(R.id.icon, pendingIntent);
 			views.setTextViewText(R.id.text, configure.name);
 			views.setTextViewText(R.id.profile, configure.profile.code);
 			if (profile.currentDevices.contains(this.configure.address)) {
-				views.setImageViewResource(R.id.icon, this.configure.profile.onIconResId);
+				views.setImageViewResource(R.id.icon,
+						this.configure.profile.onIconResId);
 			} else {
-				views.setImageViewResource(R.id.icon, this.configure.profile.offIconResId);
+				views.setImageViewResource(R.id.icon,
+						this.configure.profile.offIconResId);
 			}
-			AppWidgetManager manager = AppWidgetManager.getInstance(BtWidgetService.this);
+			AppWidgetManager manager = AppWidgetManager
+					.getInstance(BtWidgetService.this);
 			manager.updateAppWidget(this.id, views);
 		}
 

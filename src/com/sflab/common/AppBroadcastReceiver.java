@@ -9,7 +9,7 @@ public class AppBroadcastReceiver extends BroadcastReceiver {
 
 	final Action[] actions;
 
-	public AppBroadcastReceiver(Action...actions) {
+	public AppBroadcastReceiver(Action... actions) {
 		this.actions = actions;
 	}
 

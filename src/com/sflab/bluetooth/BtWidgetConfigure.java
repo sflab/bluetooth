@@ -18,19 +18,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.ViewFlipper;
 import android.widget.AdapterView.OnItemClickListener;
 
-public class BtWidgetConfigure extends Activity
-implements HasAppConfigure, OnItemClickListener {
+public class BtWidgetConfigure extends Activity implements HasAppConfigure,
+		OnItemClickListener {
 
-	private static final AppLogger LOG = Constants.LOGGER.get(BtWidgetConfigure.class);
+	private static final AppLogger LOG = Constants.LOGGER
+			.get(BtWidgetConfigure.class);
 
 	private int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
@@ -54,12 +52,10 @@ implements HasAppConfigure, OnItemClickListener {
 		Intent launchIntent = getIntent();
 		Bundle extras = launchIntent.getExtras();
 		if (extras != null) {
-			appWidgetId = extras.getInt(
-					AppWidgetManager.EXTRA_APPWIDGET_ID,
+			appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID,
 					AppWidgetManager.INVALID_APPWIDGET_ID);
 			Intent cancelResultValue = new Intent();
-			cancelResultValue.putExtra(
-					AppWidgetManager.EXTRA_APPWIDGET_ID,
+			cancelResultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
 					appWidgetId);
 			setResult(RESULT_CANCELED, cancelResultValue);
 		} else {
@@ -118,10 +114,8 @@ implements HasAppConfigure, OnItemClickListener {
 	}
 
 	private void initProfileList() {
-		ArrayAdapter<Profile> adapter = new ArrayAdapter<Profile>(
-				this,
-				android.R.layout.simple_list_item_1,
-				Profile.values());
+		ArrayAdapter<Profile> adapter = new ArrayAdapter<Profile>(this,
+				android.R.layout.simple_list_item_1, Profile.values());
 		profileList.setAdapter(adapter);
 		profileList.setOnItemClickListener(this);
 		setTitle(R.string.title_select_profile);
@@ -130,18 +124,18 @@ implements HasAppConfigure, OnItemClickListener {
 	private void initDeviceList() {
 		LOG.ENTER();
 		List<Item> items = new ArrayList<Item>();
-		BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothAdapter bluetoothAdapter = BluetoothAdapter
+				.getDefaultAdapter();
 		if (bluetoothAdapter != null) {
 			for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
 				if (profile.isSupported(getUuids(device))) {
-					items.add(Item.create(device.getName(), device.getAddress()));
+					items.add(Item
+							.create(device.getName(), device.getAddress()));
 				}
 			}
 		}
-		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(
-				this,
-				android.R.layout.simple_list_item_1,
-				items);
+		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(this,
+				android.R.layout.simple_list_item_1, items);
 		deviceList.setAdapter(adapter);
 		deviceList.setOnItemClickListener(this);
 		setTitle(R.string.title_select_device);
@@ -157,7 +151,8 @@ implements HasAppConfigure, OnItemClickListener {
 	}
 
 	@Override
-	public void onItemClick(AdapterView<?> list, View view, int position, long id) {
+	public void onItemClick(AdapterView<?> list, View view, int position,
+			long id) {
 		LOG.ENTER();
 		if (list == profileList) {
 			this.profile = (Profile) profileList.getAdapter().getItem(position);
@@ -169,13 +164,11 @@ implements HasAppConfigure, OnItemClickListener {
 		}
 	}
 
-	private  void save() {
+	private void save() {
 		LOG.ENTER();
-		getAppConfigure().registConfigure(new WidgetConfigure(
-				appWidgetId,
-				item.name,
-				item.address,
-				profile));
+		getAppConfigure().registConfigure(
+				new WidgetConfigure(appWidgetId, item.name, item.address,
+						profile));
 		Intent resultValue = new Intent();
 		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		setResult(RESULT_OK, resultValue);
@@ -188,11 +181,14 @@ implements HasAppConfigure, OnItemClickListener {
 			this.name = name;
 			this.address = address;
 		}
+
 		static Item create(String name, String address) {
 			return new Item(name, address);
 		}
+
 		final String name;
 		final String address;
+
 		@Override
 		public String toString() {
 			return this.name;

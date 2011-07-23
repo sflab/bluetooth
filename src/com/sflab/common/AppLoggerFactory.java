@@ -19,12 +19,14 @@ import android.util.Log;
 public class AppLoggerFactory {
 	private static final String TAG = AppLoggerFactory.class.getSimpleName();
 
+	private final String mAppTag;
 	private final Level mDefaultLevel;
 	private final Level mTraceLevel;
 
 	private final List<PackageWithLevel> mEntries;
 
-	public AppLoggerFactory(Level defaultLevel, Level traceLevel, String configFilename) {
+	public AppLoggerFactory(String appTag, Level defaultLevel, Level traceLevel, String configFilename) {
+		mAppTag = appTag;
 		mDefaultLevel = defaultLevel;
 		mTraceLevel = traceLevel;
 		mEntries = new ArrayList<PackageWithLevel>();
@@ -35,7 +37,8 @@ public class AppLoggerFactory {
 		}
 	}
 
-	public AppLoggerFactory(Level defaultLevel, Level traceLevel) {
+	public AppLoggerFactory(String appTag, Level defaultLevel, Level traceLevel) {
+		mAppTag = appTag;
 		mDefaultLevel = defaultLevel;
 		mTraceLevel = traceLevel;
 		mEntries = new ArrayList<PackageWithLevel>();
@@ -51,9 +54,9 @@ public class AppLoggerFactory {
 			}
 		}
 		if (level != null) {
-			return new DefaultLogger(level, mTraceLevel, clazz.getSimpleName());
+			return new DefaultLogger(level, clazz.getSimpleName());
 		} else {
-			return new DefaultLogger(mDefaultLevel, mTraceLevel, clazz.getSimpleName());
+			return new DefaultLogger(mDefaultLevel, clazz.getSimpleName());
 		}
 	}
 
@@ -223,43 +226,33 @@ public class AppLoggerFactory {
 		}
 	}
 
-	private static class DefaultLogger implements AppLogger {
+	private class DefaultLogger implements AppLogger {
 		private final String mTag;
 		private final Level mLevel;
-		private final Level mTrace;
 
-		public DefaultLogger(Level level, Level trace, String tag) {
+		public DefaultLogger(Level level, String tag) {
 			mTag = tag;
 			mLevel = level;
-			mTrace = trace;
 		}
 
 		public void DEBUG(String format, Object...args) {
-			if (Level.Debug.isHight(mLevel)) {
-				Log.d(mTag, String.format(format, args));
-			}
+			write(Level.Debug, format, args);
 		}
 
 		public void INFO(String format, Object...args) {
-			if (Level.Information.isHight(mLevel)) {
-				Log.i(mTag, String.format(format, args));
-			}
+			write(Level.Information, format, args);
 		}
 
 		public void WARRING(String format, Object...args) {
-			if (Level.Warrning.isHight(mLevel)) {
-				Log.w(mTag, String.format(format, args));
-			}
+			write(Level.Warrning, format, args);
 		}
 
 		public void ERROR(String format, Object...args) {
-			if (Level.Error.isHight(mLevel)) {
-				Log.e(mTag, String.format(format, args));
-			}
+			write(Level.Error, format, args);
 		}
 
 		public void ENTER(Object...args) {
-			if (mTrace.isHight(mLevel)) {
+			if (mTraceLevel.isHight(mLevel)) {
 				final StringBuilder builder = new StringBuilder(131);
 				if(args.length > 0) {
 					builder.append(args[0]);
@@ -267,12 +260,12 @@ public class AppLoggerFactory {
 						builder.append(args[i]);
 					}
 				}
-				DEBUG(String.format("ENTR%s(%s)", currentMethodInfo(4), builder.toString()));
+				write(mTraceLevel, String.format("ENTR%s(%s)", currentMethodInfo(4), builder.toString()));
 			}
 		}
 
 		public void LEAVE(Object...args) {
-			if (mTrace.isHight(mLevel)) {
+			if (mTraceLevel.isHight(mLevel)) {
 				final StringBuilder builder = new StringBuilder(131);
 				if(args.length > 0) {
 					builder.append(args[0]);
@@ -280,7 +273,26 @@ public class AppLoggerFactory {
 						builder.append(args[i]);
 					}
 				}
-				DEBUG(String.format("EXIT%s(%s)", currentMethodInfo(4), builder.toString()));
+				write(mTraceLevel, String.format("EXIT%s(%s)", currentMethodInfo(4), builder.toString()));
+			}
+		}
+
+		private void write(Level level, String format, Object...args) {
+			if (level.isHight(mLevel)) {
+				switch(level) {
+				case Debug:
+					Log.d(mAppTag, "["+mTag+"] "+String.format(format, args));
+					break;
+				case Information:
+					Log.i(mAppTag, "["+mTag+"] "+String.format(format, args));
+					break;
+				case Warrning:
+					Log.w(mAppTag, "["+mTag+"] "+String.format(format, args));
+					break;
+				case Error:
+					Log.e(mAppTag, "["+mTag+"] "+String.format(format, args));
+					break;
+				}
 			}
 		}
 

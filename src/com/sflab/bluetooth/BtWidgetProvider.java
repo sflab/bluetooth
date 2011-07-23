@@ -8,11 +8,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
-
 public class BtWidgetProvider extends AppWidgetProvider {
-	private static final AppLogger LOG = Constants.LOGGER.get(BtWidgetProvider.class);
+	private static final AppLogger LOG = Constants.LOGGER
+			.get(BtWidgetProvider.class);
 
-	public static final Uri CONTENT_URI = Uri.parse("content://com.sflab.bluetooth");
+	public static final Uri CONTENT_URI = Uri
+			.parse("content://com.sflab.bluetooth");
 
 	@Override
 	public void onDeleted(Context context, int[] appWidgetIds) {
@@ -52,7 +53,8 @@ public class BtWidgetProvider extends AppWidgetProvider {
 	}
 
 	@Override
-	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+	public void onUpdate(Context context, AppWidgetManager appWidgetManager,
+			int[] appWidgetIds) {
 		LOG.ENTER();
 		BtWidgetService.sendUpdateWidget(context, appWidgetIds);
 		LOG.LEAVE();

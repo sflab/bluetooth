@@ -18,9 +18,12 @@ public class A2dpConnection implements BtConnection {
 	public A2dpConnection() {
 
 		try {
-			Class<?> classServiceManager = Class.forName("android.os.ServiceManager");
-			Method methodGetService = classServiceManager.getMethod("getService", String.class);
-			IBinder binder = (IBinder)methodGetService.invoke(null, SERVICE_NAME);
+			Class<?> classServiceManager = Class
+					.forName("android.os.ServiceManager");
+			Method methodGetService = classServiceManager.getMethod(
+					"getService", String.class);
+			IBinder binder = (IBinder) methodGetService.invoke(null,
+					SERVICE_NAME);
 			mService = IBluetoothA2dp.Stub.asInterface(binder);
 		} catch (SecurityException e) {
 			e.printStackTrace();

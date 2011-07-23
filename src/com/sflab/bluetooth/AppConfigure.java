@@ -13,76 +13,81 @@ import android.app.Application;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 
-public class AppConfigure extends Application implements OnSharedPreferenceChangeListener {
-	private static final AppLogger LOG = Constants.LOGGER.get(AppConfigure.class);
+public class AppConfigure extends Application implements
+		OnSharedPreferenceChangeListener {
+	private static final AppLogger LOG = Constants.LOGGER
+			.get(AppConfigure.class);
 
-    static final String PREFERENCES_NAME = "BluetoothWidgetPrefs";
+	static final String PREFERENCES_NAME = "BluetoothWidgetPrefs";
 
-    final Map<Integer, WidgetConfigure> cache;
+	final Map<Integer, WidgetConfigure> cache;
 
-    public interface HasAppConfigure {
-    	AppConfigure getAppConfigure();
-    }
+	public interface HasAppConfigure {
+		AppConfigure getAppConfigure();
+	}
 
-    public static class NoPreferenceFoundError extends Exception {
+	public static class NoPreferenceFoundError extends Exception {
 		private static final long serialVersionUID = 2045852226392043348L;
-    }
+	}
 
-    public static class WidgetConfigure {
-    	public final int id;
-    	public final String name;
-    	public final String address;
-    	public final Profile profile;
+	public static class WidgetConfigure {
+		public final int id;
+		public final String name;
+		public final String address;
+		public final Profile profile;
 
-    	public WidgetConfigure(int id, String name, String address, Profile profile) {
-    		this.id = id;
-    		this.name = name;
-    		this.address = address;
-    		this.profile = profile;
-    	}
+		public WidgetConfigure(int id, String name, String address,
+				Profile profile) {
+			this.id = id;
+			this.name = name;
+			this.address = address;
+			this.profile = profile;
+		}
 
-    	private void remove(SharedPreferences.Editor editor) {
-    		editor.remove(Integer.toString(id));
-    	}
+		private void remove(SharedPreferences.Editor editor) {
+			editor.remove(Integer.toString(id));
+		}
 
-    	private void pack(SharedPreferences.Editor editor) {
-    		String value = String.format("%s,%s,%s", this.name, this.address, this.profile.code);
-    		editor.putString(Integer.toString(id), value);
-    	}
+		private void pack(SharedPreferences.Editor editor) {
+			String value = String.format("%s,%s,%s", this.name, this.address,
+					this.profile.code);
+			editor.putString(Integer.toString(id), value);
+		}
 
-    	private static WidgetConfigure unpack(int id, SharedPreferences pref) throws NoPreferenceFoundError {
-    		String value = pref.getString(Integer.toString(id), "");
-    		String[] values = value.split(",");
-    		if (values.length != 3) {
-    			throw new NoPreferenceFoundError();
-    		}
+		private static WidgetConfigure unpack(int id, SharedPreferences pref)
+				throws NoPreferenceFoundError {
+			String value = pref.getString(Integer.toString(id), "");
+			String[] values = value.split(",");
+			if (values.length != 3) {
+				throw new NoPreferenceFoundError();
+			}
 			String name = values[0];
 			String address = values[1];
 			String profile = values[2];
-			LOG.DEBUG("unpack(id:%d, name:%s, address:%s, profile:%s)",
-					id, name, address, profile);
-			if (name.length() == 0 || address.length() == 0 || profile.length() == 0) {
+			LOG.DEBUG("unpack(id:%d, name:%s, address:%s, profile:%s)", id,
+					name, address, profile);
+			if (name.length() == 0 || address.length() == 0
+					|| profile.length() == 0) {
 				throw new NoPreferenceFoundError();
 			}
 			try {
-				return new WidgetConfigure(id, name, address, Profile.fromCode(profile));
+				return new WidgetConfigure(id, name, address, Profile
+						.fromCode(profile));
 			} catch (NoProfileFoundError e) {
 				throw new NoPreferenceFoundError();
 			}
-    	}
+		}
 
-    	@Override
-    	public String toString() {
-    		return String.format("[name:%s,address:%s,profile:%s]",
-    				this.name,
-    				this.address,
-    				this.profile.code);
-    	}
-    }
+		@Override
+		public String toString() {
+			return String.format("[name:%s,address:%s,profile:%s]", this.name,
+					this.address, this.profile.code);
+		}
+	}
 
-    public AppConfigure() {
-    	cache = new HashMap<Integer, WidgetConfigure>();
-    }
+	public AppConfigure() {
+		cache = new HashMap<Integer, WidgetConfigure>();
+	}
 
 	@Override
 	public void onCreate() {
@@ -90,22 +95,24 @@ public class AppConfigure extends Application implements OnSharedPreferenceChang
 		SharedPreferences pref = getSharedPreferences(PREFERENCES_NAME, 0);
 		pref.registerOnSharedPreferenceChangeListener(this);
 
-		for(Entry<String, ?> entry : pref.getAll().entrySet()) {
+		for (Entry<String, ?> entry : pref.getAll().entrySet()) {
 			try {
 				int id = Integer.parseInt(entry.getKey());
 				WidgetConfigure config = WidgetConfigure.unpack(id, pref);
 				cache.put(id, config);
-			} catch(NumberFormatException e) {
-				LOG.ERROR("can't parse the configuration for key:%s",entry.getKey());
+			} catch (NumberFormatException e) {
+				LOG.ERROR("can't parse the configuration for key:%s", entry
+						.getKey());
 			} catch (NoPreferenceFoundError e) {
-				LOG.ERROR("can't parse the configuration for key:%s",entry.getKey());
+				LOG.ERROR("can't parse the configuration for key:%s", entry
+						.getKey());
 			}
 		}
 	}
 
 	@Override
 	public void onTerminate() {
-    	cache.clear();
+		cache.clear();
 		SharedPreferences pref = getSharedPreferences(PREFERENCES_NAME, 0);
 		pref.unregisterOnSharedPreferenceChangeListener(this);
 		super.onTerminate();
@@ -142,16 +149,18 @@ public class AppConfigure extends Application implements OnSharedPreferenceChang
 	}
 
 	@Override
-	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
 		try {
 			int id = Integer.parseInt(key);
 			cache.remove(id);
-			WidgetConfigure config = WidgetConfigure.unpack(id, sharedPreferences);
+			WidgetConfigure config = WidgetConfigure.unpack(id,
+					sharedPreferences);
 			cache.put(id, config);
-		} catch(NumberFormatException e) {
-			LOG.ERROR("can't parse the configuration for key:%s",key);
+		} catch (NumberFormatException e) {
+			LOG.ERROR("can't parse the configuration for key:%s", key);
 		} catch (NoPreferenceFoundError e) {
-			LOG.ERROR("can't parse the configuration for key:%s",key);
+			LOG.ERROR("can't parse the configuration for key:%s", key);
 		}
 	}
 }
