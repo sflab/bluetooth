@@ -136,6 +136,11 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 				}
 			}
 		}
+
+		if (Constants.USE_TESTDATA) {
+			items.add(Item.create("test-device", "00000000"));
+		}
+
 		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(this,
 				android.R.layout.simple_list_item_1, items);
 		deviceList.setAdapter(adapter);

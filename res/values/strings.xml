@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">"Bluetooth"</string>
+	<string name="app_name">"Bluetooth Widget"</string>
 	<string name="a2dp_label">"A2DP"</string>
 	<string name="headset_label">"HSP/Headset"</string>
 

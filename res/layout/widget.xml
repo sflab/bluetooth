@@ -21,7 +21,6 @@
 		android:shadowRadius="2"
 		android:layout_below="@+id/icon"
 		android:layout_centerHorizontal="true"
-		android:layout_marginTop="-10dp"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
 	<TextView
@@ -34,7 +33,6 @@
 		android:shadowDx="2"
 		android:shadowDy="2"
 		android:shadowRadius="2"
-		android:paddingBottom="8dp"
 		android:layout_centerInParent="true"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>

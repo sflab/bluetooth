@@ -13,25 +13,35 @@ public class Constants {
 	public static final String EXTRA_BLUETOOTH_ADDRESS = "EXTRA_BLUETOOTH_ADDRESS";
 
 	public static final AppLoggerFactory LOGGER = new AppLoggerFactory(
-			"Bluetooth", AppLoggerFactory.Level.Error,
-			AppLoggerFactory.Level.Information, Environment
-					.getExternalStorageDirectory().getPath()
-					+ "/log.config");
+			"Bluetooth",
+			AppLoggerFactory.Level.Debug,
+			AppLoggerFactory.Level.Information,
+			Environment.getExternalStorageDirectory().getPath() + "/log.config");
+
+	public static final boolean USE_TESTDATA = true;
 
 	public static class NoProfileFoundError extends Exception {
 		private static final long serialVersionUID = -1865411696886457810L;
 	}
 
 	public enum Profile {
-		A2dp("A2DP", new ParcelUuid[] { BluetoothUuid.AdvAudioDist,
-				BluetoothUuid.AudioSink }, R.string.a2dp_label,
-				R.drawable.bluetooth_on_a2dp, R.drawable.bluetooth_off), Headset(
-				"HSP", new ParcelUuid[] { BluetoothUuid.Handsfree,
-						BluetoothUuid.HSP }, R.string.a2dp_label,
-				R.drawable.bluetooth_on_hsp, R.drawable.bluetooth_off);
+		A2dp("A2DP",
+				new ParcelUuid[] { BluetoothUuid.AdvAudioDist, BluetoothUuid.AudioSink },
+				R.string.a2dp_label,
+				R.drawable.bluetooth_a2dp,
+				R.drawable.bluetooth_off),
+		Headset("HSP",
+				new ParcelUuid[] { BluetoothUuid.Handsfree, BluetoothUuid.HSP },
+				R.string.a2dp_label,
+				R.drawable.bluetooth_hsp,
+				R.drawable.bluetooth_off);
 
-		Profile(String code, ParcelUuid[] uuids, int textResId,
-				int oniconResId, int officonResId) {
+		Profile(
+				String code,
+				ParcelUuid[] uuids,
+				int textResId,
+				int oniconResId,
+				int officonResId) {
 			this.code = code;
 			this.uuids = uuids;
 			this.textResId = textResId;

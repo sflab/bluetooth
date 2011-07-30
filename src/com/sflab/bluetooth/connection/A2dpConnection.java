@@ -76,6 +76,9 @@ public class A2dpConnection implements BtConnection {
 
 	@Override
 	public BluetoothDevice[] getConnectedDevices() {
+		if (mService == null) {
+			return new BluetoothDevice[0];
+		}
 		try {
 			return mService.getConnectedSinks();
 		} catch (RemoteException e) {
