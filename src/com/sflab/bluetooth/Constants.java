@@ -14,11 +14,11 @@ public class Constants {
 
 	public static final AppLoggerFactory LOGGER = new AppLoggerFactory(
 			"Bluetooth",
-			AppLoggerFactory.Level.Debug,
+			AppLoggerFactory.Level.Warrning,
 			AppLoggerFactory.Level.Information,
 			Environment.getExternalStorageDirectory().getPath() + "/log.config");
 
-	public static final boolean USE_TESTDATA = true;
+	public static final boolean USE_TESTDATA = false;
 
 	public static class NoProfileFoundError extends Exception {
 		private static final long serialVersionUID = -1865411696886457810L;
