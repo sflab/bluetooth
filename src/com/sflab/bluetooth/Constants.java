@@ -1,5 +1,10 @@
 package com.sflab.bluetooth;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothUuid;
 import android.os.Environment;
 import android.os.ParcelUuid;
@@ -26,12 +31,28 @@ public class Constants {
 
 	public enum Profile {
 		A2dp("A2DP",
-				new ParcelUuid[] { BluetoothUuid.AdvAudioDist, BluetoothUuid.AudioSink },
+				new ParcelUuid[] {
+					BluetoothUuid.AdvAudioDist,
+					BluetoothUuid.AudioSink },
+				new int[] {
+					BluetoothClass.Service.RENDER },
+				new int[] {
+					BluetoothClass.Device.AUDIO_VIDEO_HIFI_AUDIO,
+					BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES,
+					BluetoothClass.Device.AUDIO_VIDEO_LOUDSPEAKER,
+					BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO },
 				R.string.a2dp_label,
 				R.drawable.bluetooth_a2dp,
 				R.drawable.bluetooth_off),
 		Headset("HSP",
-				new ParcelUuid[] { BluetoothUuid.Handsfree, BluetoothUuid.HSP },
+				new ParcelUuid[] {
+					BluetoothUuid.Handsfree,
+					BluetoothUuid.HSP },
+				new int[] { },
+				new int[] {
+					BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE,
+					BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET,
+					BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO },
 				R.string.a2dp_label,
 				R.drawable.bluetooth_hsp,
 				R.drawable.bluetooth_off);
@@ -39,24 +60,60 @@ public class Constants {
 		Profile(
 				String code,
 				ParcelUuid[] uuids,
+				int[] serviceClasses,
+				int[] deviceClasses,
 				int textResId,
 				int oniconResId,
 				int officonResId) {
 			this.code = code;
 			this.uuids = uuids;
+			this.serviceClasses = serviceClasses;
+			this.deviceClasses = deviceClasses;
 			this.textResId = textResId;
 			this.onIconResId = oniconResId;
 			this.offIconResId = officonResId;
 		}
 
-		public boolean isSupported(ParcelUuid[] uuids) {
-			for (ParcelUuid i : uuids) {
-				for (ParcelUuid j : this.uuids) {
-					if (i.equals(j))
-						return true;
+		public boolean isSupported(BluetoothDevice device) {
+			ParcelUuid[] uuids = getUuids(device);
+			if (uuids != null) {
+				for (ParcelUuid i : uuids) {
+					for (ParcelUuid j : this.uuids) {
+						if (i.equals(j))
+							return true;
+					}
+				}
+			}
+			BluetoothClass bluetoothClass = device.getBluetoothClass();
+			for(int requireServiceClass : this.serviceClasses) {
+				if (bluetoothClass.hasService(requireServiceClass)) {
+					return true;
+				}
+			}
+			for(int requireDeviceClass : this.deviceClasses) {
+				if (requireDeviceClass == bluetoothClass.getDeviceClass()) {
+					return true;
 				}
 			}
 			return false;
+		}
+
+		private ParcelUuid[] getUuids(BluetoothDevice device) {
+			try {
+				Method methodGetUuids = BluetoothDevice.class.getMethod("getUuids");
+				return (ParcelUuid[]) methodGetUuids.invoke(device);
+			} catch (SecurityException e) {
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			}
+			return new ParcelUuid[0];
 		}
 
 		@Override
@@ -77,5 +134,7 @@ public class Constants {
 		public final int textResId;
 		public final String code;
 		private final ParcelUuid[] uuids;
+		private final int[] serviceClasses;
+		private final int[] deviceClasses;
 	}
 }

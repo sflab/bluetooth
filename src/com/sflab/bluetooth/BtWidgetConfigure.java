@@ -19,24 +19,27 @@ import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.view.View;
 import android.view.Window;
+import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		OnItemClickListener {
 
-	private static final AppLogger LOG = Constants.LOGGER
-			.get(BtWidgetConfigure.class);
+	private static final AppLogger LOG = Constants.LOGGER.get(BtWidgetConfigure.class);
 
 	private int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
 	private ViewFlipper flipperView;
 	private ListView profileList;
 	private ListView deviceList;
+	private TextView pairingMessage;
 
 	private Profile profile;
 	private Item item;
@@ -54,10 +57,12 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		Intent launchIntent = getIntent();
 		Bundle extras = launchIntent.getExtras();
 		if (extras != null) {
-			appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID,
+			appWidgetId = extras.getInt(
+					AppWidgetManager.EXTRA_APPWIDGET_ID,
 					AppWidgetManager.INVALID_APPWIDGET_ID);
 			Intent cancelResultValue = new Intent();
-			cancelResultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
+			cancelResultValue.putExtra(
+					AppWidgetManager.EXTRA_APPWIDGET_ID,
 					appWidgetId);
 			setResult(RESULT_CANCELED, cancelResultValue);
 		} else {
@@ -76,7 +81,13 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		flipperView = (ViewFlipper) findViewById(R.id.flipper);
 		profileList = (ListView) findViewById(R.id.profile_list);
 		deviceList = (ListView) findViewById(R.id.device_list);
-
+		pairingMessage = (TextView) findViewById(R.id.pairing_message);
+		pairingMessage.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				launchBluetoothSettings();
+			}
+		});
 		initProfileList();
 	}
 
@@ -96,29 +107,14 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 	protected void onResume() {
 		LOG.ENTER();
 		super.onResume();
-	}
-
-	private ParcelUuid[] getUuids(BluetoothDevice device) {
-		try {
-			Method methodGetUuids = BluetoothDevice.class.getMethod("getUuids");
-			return (ParcelUuid[]) methodGetUuids.invoke(device);
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			e.printStackTrace();
-		}
-		return new ParcelUuid[0];
+		initDeviceList();
 	}
 
 	private void initProfileList() {
-		ArrayAdapter<Profile> adapter = new ArrayAdapter<Profile>(this,
-				android.R.layout.simple_list_item_1, Profile.values());
+		ArrayAdapter<Profile> adapter = new ArrayAdapter<Profile>(
+				this,
+				android.R.layout.simple_list_item_1,
+				Profile.values());
 		profileList.setAdapter(adapter);
 		profileList.setOnItemClickListener(this);
 	}
@@ -126,13 +122,13 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 	private void initDeviceList() {
 		LOG.ENTER();
 		List<Item> items = new ArrayList<Item>();
-		BluetoothAdapter bluetoothAdapter = BluetoothAdapter
-				.getDefaultAdapter();
-		if (bluetoothAdapter != null) {
-			for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
-				if (profile.isSupported(getUuids(device))) {
-					items.add(Item
-							.create(device.getName(), device.getAddress()));
+		if (profile != null) {
+			BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+			if (bluetoothAdapter != null) {
+				for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
+					if (profile.isSupported(device)) {
+						items.add(Item.create(device.getName(), device.getAddress()));
+					}
 				}
 			}
 		}
@@ -141,8 +137,17 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 			items.add(Item.create("test-device", "00000000"));
 		}
 
-		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(this,
-				android.R.layout.simple_list_item_1, items);
+		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(
+				this,
+				android.R.layout.simple_list_item_1,
+				items);
+
+		if (adapter.getCount() > 0) {
+			pairingMessage.setVisibility(View.INVISIBLE);
+		} else {
+			pairingMessage.setVisibility(View.VISIBLE);
+		}
+
 		deviceList.setAdapter(adapter);
 		deviceList.setOnItemClickListener(this);
 	}
@@ -175,9 +180,11 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 
 	private void save() {
 		LOG.ENTER();
-		getAppConfigure().registConfigure(
-				new WidgetConfigure(appWidgetId, item.name, item.address,
-						profile));
+		getAppConfigure().registConfigure(new WidgetConfigure(
+				appWidgetId,
+				item.name,
+				item.address,
+				profile));
 		Intent resultValue = new Intent();
 		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		setResult(RESULT_OK, resultValue);
@@ -187,6 +194,14 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 	private void setupAnimation(boolean back) {
 		flipperView.setInAnimation(AnimationUtils.makeInAnimation(this, back));
 		flipperView.setOutAnimation(AnimationUtils.makeOutAnimation(this, back));
+	}
+
+	private void launchBluetoothSettings() {
+		try {
+			Intent intentBluetooth = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+		    startActivity(intentBluetooth);
+		} catch(Exception e) {
+		}
 	}
 
 	private static class Item {

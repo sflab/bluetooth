@@ -26,9 +26,26 @@
 			android:shadowRadius="2"
 			android:clickable="true"/>
 	</RelativeLayout>
-	<ListView
-		android:id="@+id/device_list"
+	<RelativeLayout
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-		android:clickable="true"/>
+		android:gravity="center">
+		<ListView
+			android:id="@+id/device_list"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:clickable="true"/>
+		<TextView
+			android:id="@+id/pairing_message"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:visibility="invisible"
+			android:gravity="center"
+			android:text="@string/message_pairing"
+			android:textColor="@android:color/white"
+			android:textStyle="bold"
+			android:shadowColor="@android:color/black"
+			android:shadowRadius="2"
+			android:clickable="true"/>
+	</RelativeLayout>
 </LinearLayout>

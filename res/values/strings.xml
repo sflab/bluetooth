@@ -8,6 +8,9 @@
 	<string name="message_connecting">"Connecting..."</string>
 	<string name="message_disconnecting">"Disconnecting..."</string>
 	<string name="message_not_enable">"Not Enable"</string>
+	<string name="message_pairing">
+	"There are no paired device.\nYou need to pair your bluetooth device\nusing Android System Settings.\n\nTap this and go Android System Settings."
+	</string>
 
 	<string name="title_select_profile">"Bluetooth profile"</string>
 	<string name="title_select_device">"Bluetooth device"</string>
