@@ -13,7 +13,8 @@
 			android:layout_height="fill_parent"
 			android:gravity="right"
 			android:src="@drawable/bar_tail"
-			android:scaleType="fitEnd" />
+			android:scaleType="fitEnd"
+		/>
 		<TextView
 			android:layout_width="fill_parent"
 			android:layout_height="60dp"
@@ -24,7 +25,8 @@
 			android:textStyle="bold"
 			android:shadowColor="@android:color/black"
 			android:shadowRadius="2"
-			android:clickable="true"/>
+			android:clickable="true"
+		/>
 	</RelativeLayout>
 	<RelativeLayout
 		android:layout_width="fill_parent"
@@ -34,7 +36,8 @@
 			android:id="@+id/device_list"
 			android:layout_width="fill_parent"
 			android:layout_height="fill_parent"
-			android:clickable="true"/>
+			android:clickable="true"
+		/>
 		<TextView
 			android:id="@+id/pairing_message"
 			android:layout_width="fill_parent"
@@ -46,6 +49,7 @@
 			android:textStyle="bold"
 			android:shadowColor="@android:color/black"
 			android:shadowRadius="2"
-			android:clickable="true"/>
+			android:clickable="true"
+		/>
 	</RelativeLayout>
 </LinearLayout>

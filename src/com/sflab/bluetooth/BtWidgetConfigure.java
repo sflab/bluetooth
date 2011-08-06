@@ -3,12 +3,14 @@ package com.sflab.bluetooth;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.sflab.bluetooth.AppConfigure.HasAppConfigure;
 import com.sflab.bluetooth.AppConfigure.WidgetConfigure;
 import com.sflab.bluetooth.Constants.Profile;
 import com.sflab.common.AppLogger;
+import com.sflab.common.BindViewAdapter;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
@@ -24,6 +26,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
@@ -111,10 +114,21 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 	}
 
 	private void initProfileList() {
-		ArrayAdapter<Profile> adapter = new ArrayAdapter<Profile>(
+		BindViewAdapter.ViewBinder<Profile> viewBinder = new BindViewAdapter.ViewBinder<Profile>() {
+			@Override
+			public View bind(View view, Profile item) {
+				View text = view.findViewById(android.R.id.text1);
+				if (text instanceof TextView) {
+					((TextView)text).setText(item.toString());
+				}
+				return view;
+			}
+		};
+		BindViewAdapter<Profile> adapter = new BindViewAdapter<Profile>(
 				this,
-				android.R.layout.simple_list_item_1,
-				Profile.values());
+				R.layout.list_item_with_arrow,
+				viewBinder);
+		adapter.setSource(Arrays.asList(Profile.values()));
 		profileList.setAdapter(adapter);
 		profileList.setOnItemClickListener(this);
 	}
@@ -139,7 +153,7 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 
 		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(
 				this,
-				android.R.layout.simple_list_item_1,
+				R.layout.list_item,
 				items);
 
 		if (adapter.getCount() > 0) {
