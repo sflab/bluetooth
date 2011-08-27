@@ -33,7 +33,4 @@ interface IBluetoothA2dp {
     int getSinkState(in BluetoothDevice device);
     boolean setSinkPriority(in BluetoothDevice device, int priority);
     int getSinkPriority(in BluetoothDevice device);
-
-    boolean connectSinkInternal(in BluetoothDevice device);
-    boolean disconnectSinkInternal(in BluetoothDevice device);
 }
