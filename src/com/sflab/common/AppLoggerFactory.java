@@ -30,10 +30,12 @@ public class AppLoggerFactory {
 		mDefaultLevel = defaultLevel;
 		mTraceLevel = traceLevel;
 		mEntries = new ArrayList<PackageWithLevel>();
-		File configFile = new File(configFilename);
-		try {
-			config(configFile);
-		} catch(IllegalStateException e) {
+		if (configFilename != null) {
+			File configFile = new File(configFilename);
+			try {
+				config(configFile);
+			} catch(IllegalStateException e) {
+			}
 		}
 	}
 
