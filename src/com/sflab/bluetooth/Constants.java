@@ -6,7 +6,6 @@ import java.lang.reflect.Method;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothUuid;
-import android.os.Environment;
 import android.os.ParcelUuid;
 
 import com.sflab.common.AppLoggerFactory;
@@ -19,9 +18,9 @@ public class Constants {
 
 	public static final AppLoggerFactory LOGGER = new AppLoggerFactory(
 			"Bluetooth",
-			AppLoggerFactory.Level.Warrning,
+			AppLoggerFactory.Level.Error,
 			AppLoggerFactory.Level.Information,
-			Environment.getExternalStorageDirectory().getPath() + "/log.config");
+			null);
 
 	public static final boolean USE_TESTDATA = false;
 
