@@ -179,7 +179,7 @@ public class HeadsetConnection implements BtConnection {
 	public int getState(BluetoothDevice device) {
 		if (mService != null || device == null) {
 			try {
-				return mService.getState();
+				return mService.getState(device);
 			} catch (RemoteException e) {
 			}
 		} else {
@@ -254,7 +254,7 @@ public class HeadsetConnection implements BtConnection {
 	public boolean disconnectHeadset(BluetoothDevice device) {
 		if (mService != null || device == null) {
 			try {
-				mService.disconnectHeadset();
+				mService.disconnectHeadset(device);
 				return true;
 			} catch (RemoteException e) {
 			}
