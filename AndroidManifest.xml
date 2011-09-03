@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.sflab.bluetooth"
-	android:versionCode="08030"
-	android:versionName="0.3.0-froyo">
+	android:versionCode="08100"
+	android:versionName="1.0.0-froyo">
 
 	<uses-sdk android:minSdkVersion="8" />
 	<uses-permission android:name="android.permission.BLUETOOTH" />
