@@ -21,14 +21,21 @@ import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
-public class BtWidgetConfigure extends Activity implements HasAppConfigure,
-		OnItemClickListener {
+public class BtWidgetConfigure extends Activity implements
+		HasAppConfigure,
+		OnClickListener,
+		OnItemClickListener,
+		OnCheckedChangeListener {
 
 	private static final AppLogger LOG = Constants.LOGGER.get(BtWidgetConfigure.class);
 
@@ -38,6 +45,11 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 	private ListView profileList;
 	private ListView deviceList;
 	private TextView pairingMessage;
+	private EditText textEditName;
+	private EditText textDefaultName;
+	private RadioButton checkDefaultName;
+	private RadioButton checkEditName;
+	private Button createButton;
 
 	private Profile profile;
 	private Item item;
@@ -80,12 +92,15 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		profileList = (ListView) findViewById(R.id.profile_list);
 		deviceList = (ListView) findViewById(R.id.device_list);
 		pairingMessage = (TextView) findViewById(R.id.pairing_message);
-		pairingMessage.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				launchBluetoothSettings();
-			}
-		});
+		pairingMessage.setOnClickListener(this);
+		textEditName = (EditText) findViewById(R.id.text_edit_name);
+		textDefaultName = (EditText) findViewById(R.id.text_default_name);
+		checkDefaultName = (RadioButton) findViewById(R.id.radio_default_name);
+		checkDefaultName.setOnCheckedChangeListener(this);
+		checkEditName = (RadioButton) findViewById(R.id.radio_edit_name);
+		checkEditName.setOnCheckedChangeListener(this);
+		createButton = (Button) findViewById(R.id.button_create);
+		createButton.setOnClickListener(this);
 		initProfileList();
 	}
 
@@ -146,10 +161,21 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 			items.add(Item.create("test-device", "00000000"));
 		}
 
-		ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(
+		BindViewAdapter.ViewBinder<Item> viewBinder = new BindViewAdapter.ViewBinder<Item>() {
+			@Override
+			public View bind(View view, Item item) {
+				View text = view.findViewById(android.R.id.text1);
+				if (text instanceof TextView) {
+					((TextView)text).setText(item.name);
+				}
+				return view;
+			}
+		};
+		BindViewAdapter<Item> adapter = new BindViewAdapter<Item>(
 				this,
-				R.layout.list_item,
-				items);
+				R.layout.list_item_with_arrow,
+				viewBinder);
+		adapter.setSource(items);
 
 		if (adapter.getCount() > 0) {
 			pairingMessage.setVisibility(View.INVISIBLE);
@@ -161,13 +187,30 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 		deviceList.setOnItemClickListener(this);
 	}
 
+	private void initEditName() {
+		textDefaultName.setText(item.name);
+		updateRadioButton();
+	}
+
 	@Override
 	public void onBackPressed() {
 		if (this.flipperView.getCurrentView() == this.flipperView.getChildAt(0)) {
 			super.onBackPressed();
+
 		} else {
 			setupAnimation(true);
 			this.flipperView.showPrevious();
+		}
+	}
+
+	@Override
+	public void onClick(View v) {
+		if (v == pairingMessage) {
+			launchBluetoothSettings();
+
+		} else if (v == createButton) {
+			save();
+			finish();
 		}
 	}
 
@@ -180,20 +223,42 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 			initDeviceList();
 			setupAnimation(false);
 			this.flipperView.showNext();
+
 		} else if (list == deviceList) {
 			this.item = (Item) deviceList.getAdapter().getItem(position);
-			save();
-			finish();
+			initEditName();
+			setupAnimation(false);
+			this.flipperView.showNext();
 		}
+	}
+
+
+	@Override
+	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+		updateRadioButton();
+	}
+
+	private void updateRadioButton() {
+		textDefaultName.setEnabled(checkDefaultName.isChecked());
+		textEditName.setEnabled(checkEditName.isChecked());
 	}
 
 	private void save() {
 		LOG.ENTER();
-		getAppConfigure().registConfigure(new WidgetConfigure(
-				appWidgetId,
-				item.name,
-				item.address,
-				profile));
+		if (checkDefaultName.isChecked()) {
+			getAppConfigure().registConfigure(new WidgetConfigure(
+					appWidgetId,
+					item.name,
+					item.address,
+					profile));
+
+		} else {
+			getAppConfigure().registConfigure(new WidgetConfigure(
+					appWidgetId,
+					textEditName.getText().toString(),
+					item.address,
+					profile));
+		}
 		Intent resultValue = new Intent();
 		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		setResult(RESULT_OK, resultValue);
@@ -208,7 +273,7 @@ public class BtWidgetConfigure extends Activity implements HasAppConfigure,
 	private void launchBluetoothSettings() {
 		try {
 			Intent intentBluetooth = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
-		    startActivity(intentBluetooth);
+			startActivity(intentBluetooth);
 		} catch(Exception e) {
 		}
 	}
