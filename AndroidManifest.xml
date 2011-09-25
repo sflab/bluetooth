@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.sflab.bluetooth"
-	android:versionCode="07100"
+	android:versionCode="11100"
 	android:versionName="1.0.0">
 
-	<uses-sdk android:minSdkVersion="13" />
+	<uses-sdk android:minSdkVersion="11" />
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 	<uses-permission android:name="android.permission.WRITE_SETTINGS" />

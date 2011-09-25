@@ -50,7 +50,7 @@ public class AppConfigure extends Application implements
 
 		private void pack(SharedPreferences.Editor editor) {
 			String value = String.format("%s,%s,%s", this.name, this.address,
-					this.profile.code);
+					this.profile.label);
 			editor.putString(Integer.toString(id), value);
 		}
 
@@ -72,7 +72,7 @@ public class AppConfigure extends Application implements
 			}
 			try {
 				return new WidgetConfigure(id, name, address, Profile
-						.fromCode(profile));
+						.fromLabel(profile));
 			} catch (NoProfileFoundError e) {
 				throw new NoPreferenceFoundError();
 			}
@@ -81,7 +81,7 @@ public class AppConfigure extends Application implements
 		@Override
 		public String toString() {
 			return String.format("[name:%s,address:%s,profile:%s]", this.name,
-					this.address, this.profile.code);
+					this.address, this.profile.label);
 		}
 	}
 

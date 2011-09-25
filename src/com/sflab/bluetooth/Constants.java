@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothUuid;
 import android.os.ParcelUuid;
 
@@ -18,7 +19,7 @@ public class Constants {
 
 	public static final AppLoggerFactory LOGGER = new AppLoggerFactory(
 			"Bluetooth",
-			AppLoggerFactory.Level.Error,
+			AppLoggerFactory.Level.Warrning,
 			AppLoggerFactory.Level.Information,
 			null);
 
@@ -29,7 +30,8 @@ public class Constants {
 	}
 
 	public enum Profile {
-		A2dp("A2DP",
+		A2dp(BluetoothProfile.A2DP,
+				"A2DP",
 				new ParcelUuid[] {
 					BluetoothUuid.AdvAudioDist,
 					BluetoothUuid.AudioSink },
@@ -43,7 +45,8 @@ public class Constants {
 				R.string.a2dp_label,
 				R.drawable.bluetooth_a2dp,
 				R.drawable.bluetooth_off),
-		Headset("HSP",
+		Headset(BluetoothProfile.HEADSET,
+				"HSP",
 				new ParcelUuid[] {
 					BluetoothUuid.Handsfree,
 					BluetoothUuid.HSP },
@@ -57,7 +60,8 @@ public class Constants {
 				R.drawable.bluetooth_off);
 
 		Profile(
-				String code,
+				int code,
+				String label,
 				ParcelUuid[] uuids,
 				int[] serviceClasses,
 				int[] deviceClasses,
@@ -65,6 +69,7 @@ public class Constants {
 				int oniconResId,
 				int officonResId) {
 			this.code = code;
+			this.label = label;
 			this.uuids = uuids;
 			this.serviceClasses = serviceClasses;
 			this.deviceClasses = deviceClasses;
@@ -117,21 +122,22 @@ public class Constants {
 
 		@Override
 		public String toString() {
-			return this.code;
+			return this.label;
 		}
 
-		public static Profile fromCode(String code) throws NoProfileFoundError {
+		public static Profile fromLabel(String label) throws NoProfileFoundError {
 			for (Profile i : Profile.values()) {
-				if (i.code.equals(code))
+				if (i.label.equals(label))
 					return i;
 			}
 			throw new NoProfileFoundError();
 		}
 
+		public final int code;
+		public final String label;
 		public final int offIconResId;
 		public final int onIconResId;
 		public final int textResId;
-		public final String code;
 		private final ParcelUuid[] uuids;
 		private final int[] serviceClasses;
 		private final int[] deviceClasses;

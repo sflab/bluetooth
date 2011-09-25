@@ -47,6 +47,9 @@ public class BtWidgetProvider extends AppWidgetProvider {
 			resumeIntent.setAction(BtWidgetService.ACTION_RESUME);
 			context.startService(resumeIntent);
 		} else {
+			Intent resumeIntent = new Intent(context, BtWidgetService.class);
+			resumeIntent.setAction(BtWidgetService.ACTION_RESUME);
+			context.startService(resumeIntent);
 			super.onReceive(context, intent);
 		}
 		LOG.LEAVE();

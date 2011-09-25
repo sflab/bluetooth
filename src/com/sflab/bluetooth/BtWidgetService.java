@@ -10,10 +10,6 @@ import com.sflab.bluetooth.AppConfigure.HasAppConfigure;
 import com.sflab.bluetooth.AppConfigure.NoPreferenceFoundError;
 import com.sflab.bluetooth.AppConfigure.WidgetConfigure;
 import com.sflab.bluetooth.Constants.Profile;
-import com.sflab.bluetooth.connection.A2dpConnection;
-import com.sflab.bluetooth.connection.BtConnection;
-import com.sflab.bluetooth.connection.HeadsetConnection;
-import com.sflab.bluetooth.connection.HeadsetConnection.ServiceListener;
 import com.sflab.common.AppBroadcastReceiver;
 import com.sflab.common.AppLogger;
 import com.sflab.common.AppBroadcastReceiver.ActionCommand;
@@ -21,8 +17,12 @@ import com.sflab.common.AppBroadcastReceiver.ActionCommand;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
+import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothProfile.ServiceListener;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
@@ -52,7 +52,7 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 		}
 
 		void release() {
-			this.connection.release();
+			this.connection.close();
 			this.currentDevices.clear();
 		}
 
@@ -115,24 +115,37 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 	}
 
 	@Override
+	public void onCreate() {
+		LOG.ENTER();
+
+		super.onCreate();
+		setupMessages();
+		mBroadcastReceiver.regist(this);
+
+		LOG.LEAVE();
+	}
+
+	@Override
 	public void onStart(Intent intent, int startId) {
 		LOG.ENTER(intent, startId);
+
 		super.onStart(intent, startId);
 		Set<Integer> widgetIds = getAppConfigure().getEntrySet();
-		if (!widgetIds.isEmpty() || intent.getAction().equals(ACTION_ENABLE)) {
-			profiles.put(Profile.A2dp, new ProfileEntry(new A2dpConnection()));
-			profiles.put(Profile.Headset, new ProfileEntry(
-					new HeadsetConnection(this, this)));
-			mBroadcastReceiver.regist(this);
 
-			setupMessages();
+		if (!widgetIds.isEmpty() || intent.getAction().equals(ACTION_ENABLE)) {
+			for (Profile p : Profile.values()) {
+				BtConnection connection = new BtConnection(this, this, p.code);
+				profiles.put(p, new ProfileEntry(connection));
+			}
 			updateBtState();
 			for (int id : widgetIds) {
 				updateWidget(id);
 			}
+
 		} else {
 			stopSelf();
 		}
+
 		LOG.LEAVE();
 	}
 
@@ -164,15 +177,6 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 		Intent intent = new Intent(BtWidgetService.ACTION_DELETE);
 		intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
 		context.sendBroadcast(intent);
-	}
-
-	@Override
-	public void onServiceConnected() {
-		updateBtState();
-	}
-
-	@Override
-	public void onServiceDisconnected() {
 	}
 
 	private AppBroadcastReceiver.Action action(String name,
@@ -234,7 +238,7 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 							updateBtState();
 						}
 					}), action(
-					"android.bluetooth.headset.action.STATE_CHANGED",
+					BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED,
 					new ActionCommand() {
 						@Override
 						public void action(Intent intent) {
@@ -252,7 +256,7 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 							}
 						}
 					}), action(
-					"android.bluetooth.a2dp.action.SINK_STATE_CHANGED",
+					BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED,
 					new ActionCommand() {
 						@Override
 						public void action(Intent intent) {
@@ -414,7 +418,7 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 			LOG.DEBUG("  id:%d", this.id);
 			LOG.DEBUG("  name:%s", this.configure.name);
 			LOG.DEBUG("  address:%s", this.configure.address);
-			LOG.DEBUG("  profile:%s", this.configure.profile.code);
+			LOG.DEBUG("  profile:%s", this.configure.profile.label);
 		}
 
 		void update() {
@@ -422,13 +426,17 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 			LOG.DEBUG("  id:%d", this.id);
 			LOG.DEBUG("  name:%s", this.configure.name);
 			LOG.DEBUG("  address:%s", this.configure.address);
-			LOG.DEBUG("  profile:%s", this.configure.profile.code);
+			LOG.DEBUG("  profile:%s", this.configure.profile.label);
 			ProfileEntry profile = profiles.get(configure.profile);
+			LOG.DEBUG("  current:%s", profile);
+			for(Profile p : profiles.keySet()) {
+				LOG.DEBUG("  entries:%s", p.toString());
+			}
 			RemoteViews views = new RemoteViews(getPackageName(),
 					R.layout.widget);
 			views.setOnClickPendingIntent(R.id.icon, pendingIntent);
 			views.setTextViewText(R.id.text, configure.name);
-			views.setTextViewText(R.id.profile, configure.profile.code);
+			views.setTextViewText(R.id.profile, configure.profile.label);
 			if (profile.currentDevices.contains(this.configure.address)) {
 				views.setImageViewResource(R.id.icon,
 						this.configure.profile.onIconResId);
@@ -445,6 +453,15 @@ public class BtWidgetService extends Service implements HasAppConfigure,
 			LOG.ENTER();
 			getAppConfigure().unregitConfigure(this.configure);
 		}
+	}
+
+	@Override
+	public void onServiceConnected(int profile, BluetoothProfile proxy) {
+		updateBtState();
+	}
+
+	@Override
+	public void onServiceDisconnected(int profile) {
 	}
 
 }
