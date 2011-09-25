@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.sflab.bluetooth"
 	android:versionCode="11100"
-	android:versionName="1.0.0">
+	android:versionName="1.0.0-honeycomb">
 
 	<uses-sdk android:minSdkVersion="11" />
 	<uses-permission android:name="android.permission.BLUETOOTH" />
